@@ -41,5 +41,11 @@ export default [
       'no-undef': 'off',
       ...tsPlugin.configs.recommended.rules
     }
+  },
+  {
+    files: ['tests/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off'
+    }
   }
 ];

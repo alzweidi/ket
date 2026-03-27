@@ -96,16 +96,16 @@ export class Interpreter {
       probabilities.set(bitstring, count / settings.shots);
     }
 
-    return lastState
-      ? {
-          counts,
-          probabilities,
-          statevector: lastState
-        }
-      : {
-          counts,
-          probabilities
-        };
+    /* v8 ignore next 4 -- the multi-shot loop always assigns lastState when shots > 1. */
+    if (!lastState) {
+      return { counts, probabilities };
+    }
+
+    return {
+      counts,
+      probabilities,
+      statevector: lastState
+    };
   }
 
   private executeSingleRun(runStatement: RunStatement | null): { measurement: string; state: StateVector } {

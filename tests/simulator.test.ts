@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { gateCNOT, gateH, gateX } from '../src/simulator/gates.js';
-import { measureAll } from '../src/simulator/measurement.js';
+import { measureAll, measureRegister } from '../src/simulator/measurement.js';
 import { StateVector } from '../src/simulator/statevector.js';
 import { compileSource } from '../src/shared/compiler.js';
 import { Interpreter } from '../src/interpreter/interpreter.js';
@@ -34,6 +34,15 @@ describe('StateVector', () => {
     const state = new StateVector(1);
     state.applySingle(gateH(), 0);
     vi.spyOn(Math, 'random').mockReturnValueOnce(0.9);
+    expect(measureAll(state).bitstring).toBe('1');
+  });
+
+  it('covers defensive measurement fallbacks', () => {
+    const state = new StateVector(1);
+
+    expect(() => measureRegister(state, [])).toThrow('Failed to sample register measurement');
+
+    vi.spyOn(Math, 'random').mockReturnValueOnce(Number.NaN);
     expect(measureAll(state).bitstring).toBe('1');
   });
 });

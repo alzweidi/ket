@@ -49,11 +49,11 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {},
   "devDependencies": {
     "@types/node": "20.12.2",
     "@typescript-eslint/eslint-plugin": "8.27.0",
     "@typescript-eslint/parser": "8.27.0",
+    "@vitest/coverage-v8": "1.6.0",
     "esbuild": "0.21.3",
     "eslint": "9.3.0",
     "prettier": "3.2.5",
