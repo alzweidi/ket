@@ -1,0 +1,11 @@
+// Bell state: |Φ+⟩ = (|00⟩ + |11⟩) / √2
+circuit bell_state() {
+  qubit q[2]
+
+  H q[0]
+  CNOT q[0], q[1]
+
+  let r = measure q
+}
+
+run bell_state()

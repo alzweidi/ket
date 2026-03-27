@@ -1,0 +1,17 @@
+// Grover's search: find |101⟩ in 3-qubit space
+circuit grover(target: bitstring) {
+  qubit q[3]
+
+  H q[0]
+  H q[1]
+  H q[2]
+
+  repeat 2 {
+    phase_oracle q matches target
+    diffuse q
+  }
+
+  let r = measure q
+}
+
+run grover(|101⟩)

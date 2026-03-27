@@ -1,0 +1,3 @@
+qubit q
+H q
+let r = measure q

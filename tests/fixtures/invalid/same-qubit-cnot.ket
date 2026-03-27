@@ -1,0 +1,2 @@
+qubit q[2]
+CNOT q[0], q[0]

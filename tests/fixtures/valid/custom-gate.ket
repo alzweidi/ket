@@ -1,0 +1,12 @@
+gate bell(a, b) {
+  H a
+  CNOT a, b
+}
+
+circuit run_bell() {
+  qubit q[2]
+  bell q[0], q[1]
+  let r = measure q
+}
+
+run run_bell()

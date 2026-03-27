@@ -1,0 +1,16 @@
+// Quantum teleportation protocol (3 qubits)
+circuit teleportation() {
+  qubit q[3]
+
+  H q[0]
+  H q[1]
+  CNOT q[1], q[2]
+  CNOT q[0], q[1]
+  H q[0]
+
+  let c = measure q[0]
+  let d = measure q[1]
+  let r = measure q[2]
+}
+
+run teleportation()

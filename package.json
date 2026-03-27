@@ -1,0 +1,64 @@
+{
+  "name": "ket",
+  "version": "1.0.0",
+  "description": "a small quantum programming language, simulator, and cli written in typescript",
+  "author": "Abedalaziz Alzweidi",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "ket": "./dist/ket.js"
+  },
+  "files": [
+    "dist/",
+    "NOTICE"
+  ],
+  "scripts": {
+    "build": "esbuild src/cli/index.ts --bundle --platform=node --target=node20 --outfile=dist/ket.js --format=esm",
+    "build:playground": "pnpm --filter ket-playground build",
+    "build:watch": "esbuild src/cli/index.ts --bundle --platform=node --target=node20 --outfile=dist/ket.js --format=esm --watch",
+    "dev": "node scripts/dev.mjs",
+    "dev:cli": "node scripts/dev-cli.mjs",
+    "dev:playground": "pnpm --filter ket-playground dev",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src tests playground/src",
+    "format": "prettier --write src tests playground/src",
+    "typecheck": "tsc --noEmit && pnpm --filter ket-playground typecheck",
+    "prepack": "pnpm build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alzweidi/ket.git"
+  },
+  "homepage": "https://github.com/alzweidi/ket#readme",
+  "bugs": {
+    "url": "https://github.com/alzweidi/ket/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "quantum",
+    "quantum-computing",
+    "qasm",
+    "compiler",
+    "simulator",
+    "cli"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "20.12.2",
+    "@typescript-eslint/eslint-plugin": "8.27.0",
+    "@typescript-eslint/parser": "8.27.0",
+    "esbuild": "0.21.3",
+    "eslint": "9.3.0",
+    "prettier": "3.2.5",
+    "ts-node": "10.9.2",
+    "typescript": "5.4.5",
+    "vitest": "1.6.0"
+  }
+}

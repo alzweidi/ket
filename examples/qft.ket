@@ -1,0 +1,11 @@
+// Quantum Fourier Transform on 4 qubits
+circuit qft_example() {
+  qubit q[4]
+
+  X q[0]
+  qft q
+
+  let r = measure q
+}
+
+run qft_example()
