@@ -2,7 +2,7 @@
 
 the c17 implementation lives in [`native`](../native). it keeps ket focused on quantum circuits: source programs become a checked list of primitive quantum operations and classical conditions. the simulator and openqasm exporter consume that same list.
 
-this guide describes `build/ket`. the typescript cli and browser playground still use the separate implementation in `src`.
+the terminal, browser and hardware client share the c frontend and its checked circuit.
 
 ## build
 
@@ -12,7 +12,7 @@ make test
 make sanitise
 ```
 
-the build uses a c17 compiler with `<complex.h>`, the system maths library, and make. clang and gcc on macos/linux are the intended targets. the test driver needs python 3 with no additional packages; `make sanitise` needs clang. the executable itself needs neither node nor python.
+the build uses a c17 compiler with `<complex.h>`, the system maths library, make, pkg-config, libcurl and json-c. clang and gcc on macos/linux are the intended targets. the test driver needs python 3 with no additional packages; `make sanitise` needs clang. the executable itself needs neither node nor python.
 
 build options can be supplied to make, for example `make CC=clang BUILD=build/clang`. generated files stay under `build/`, which is ignored by git.
 
@@ -31,7 +31,7 @@ build options can be supplied to make, for example `make CC=clang BUILD=build/cl
 
 successful commands return 0, source/runtime/file errors return 1, and invalid command-line arguments return 2. compiler errors include the source path, line, column, and a caret when the line fits on screen.
 
-`run ... on ibm` is accepted for checking and export. native `run` reports that hardware submission is unavailable instead of silently running that request locally. it does not read ibm tokens or the typescript cli's configuration.
+`run ... on ibm` selects IBM Quantum. The CLI also accepts `--backend local|ibm`. See [IBM configuration and playground commands](usage/cli.md).
 
 ## language
 
@@ -113,7 +113,7 @@ openqasm 2 consumers can interpret gate definitions with different global phases
 | file | responsibility |
 | --- | --- |
 | [`frontend.c`](../native/src/frontend.c) | lexer, expression/statement parser, bindings, semantic checks, specialisation and lowering |
-| [`ket.h`](../native/include/ket.h) | circuit operations, source spans, diagnostics, and public c interface |
+| [`ket.h`](../native/include/ket.h) | opaque program handle, source spans, diagnostics and public c interface |
 | [`simulator.c`](../native/src/simulator.c) | state vector, unitary gates, collapse, classical branching, and seeded sampling |
 | [`qasm.c`](../native/src/qasm.c) | primitive operations to openqasm 2.0 with `qelib1.inc` |
 | [`main.c`](../native/src/main.c) | file handling, arguments, and text/json output |
@@ -122,7 +122,7 @@ the compiler resolves all qubit indices and numeric arguments before a backend r
 
 terminal measurements sample a cumulative probability distribution built once. circuits with feed-forward cache the unitary prefix, then collapse and execute the conditional suffix independently for each shot. randomness belongs to each run; there is no process-global random state.
 
-`ket_compile` returns a program that owns its storage. the caller may release the source after compilation. pass that program to `ket_inspect`, `ket_run`, or `ket_qasm`; release returned state/results/programs with the matching free functions in `ket.h`. the backend functions expect an unmodified program produced by the compiler. source/error/output pointers must be valid; source must be nul-terminated. the command-line reader additionally rejects embedded nul bytes.
+`ket_compile` returns a program that owns its storage. the caller may release the source after compilation. pass that program to `ket_inspect`, `ket_run`, or `ket_qasm`; release returned state/results/programs with the matching free functions in `ket.h`. `ket_program_info` returns circuit sizes and the selected backend. `ket_measurement_name` returns a binding name and width in the order used for results. the public program handle is opaque. each backend validates the private representation before using register indices or conditional jumps. source/error/output pointers must be valid; source must be nul-terminated. the command-line reader additionally rejects embedded nul bytes.
 
 ## limits
 
@@ -141,7 +141,7 @@ terminal measurements sample a cumulative probability distribution built once. c
 
 nesting limits count internal parser/evaluator frames, not just visible braces. a state vector uses roughly 16 mib at 20 qubits; sampling and feed-forward require additional buffers. mid-circuit measurements can still be expensive because their suffix runs for each shot. these limits bound resources; they do not promise fast execution for every accepted circuit.
 
-this version has no noise model, qubit reset/reuse, hardware submission, browser binding, optimiser, modules, or executable-code backend. the native binary is the compiler/simulator; ket programs compile to quantum circuits and openqasm.
+the local simulator models ideal, noiseless gates. ket programs compile to quantum circuits. the terminal and playground export openqasm 2. the ibm client emits physical openqasm 3 for the selected device.
 
 ## validation
 
@@ -149,4 +149,4 @@ this version has no noise model, qubit reset/reuse, hardware submission, browser
 
 export tests interpret primitive gates with an independent dense-matrix evaluator. that evaluator is a narrow test oracle, not a general openqasm parser. tests also cover partial measurements, feed-forward branches, seed reproducibility, the existing examples and fixtures, bounded expansion, malformed input, and output-file preservation.
 
-`make sanitise` runs the same suite under clang's address and undefined-behaviour sanitisers, with undefined behaviour configured to fail the command. ci builds the native target separately from the typescript app.
+`make sanitise` runs the same suite under clang's address and undefined-behaviour sanitisers, with undefined behaviour configured to fail the command. ci also rebuilds the webassembly module and checks the shipped browser engine against the cli.

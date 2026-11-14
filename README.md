@@ -1,83 +1,47 @@
 # ket
 
-ket is a small language for writing quantum circuits, inspecting their amplitudes, and running measurement experiments.
+Ket is a small quantum programming language written in C17. Write a circuit once and sample it in the terminal or playground, inspect its amplitudes, export OpenQASM, or send it to an IBM quantum computer.
 
-the native toolchain is written in c17. it checks `.ket` programs, specialises their gates and loops into a circuit, simulates that circuit locally, and exports the same operations to openqasm 2.0. the executable has no third-party runtime dependencies.
+```ket
+qubit q[2]
+H q[0]
+CNOT q[0], q[1]
+let pair = measure q
+```
 
-## build and run
+## try it
 
-you need a c17 compiler with complex-number support and `make` (clang or gcc on macos/linux).
+With a C compiler, Make, pkg-config, libcurl and json-c installed, run these commands from the checkout. Platform-specific packages are listed in the [installation guide](docs/getting-started/installation.md).
 
 ```sh
 make
 ./build/ket run examples/bell-state.ket --shots 4096 --seed 42
+```
+
+The Hadamard gate and CNOT entangle the two qubits. In the ideal simulator, the only outcomes are `00` and `11`. The [Grover](examples/grover.ket), [Fourier transform](examples/qft.ket) and [teleportation](examples/teleportation.ket) examples exercise the same compiler.
+
+```sh
 ./build/ket inspect examples/bell-state.ket
-./build/ket compile examples/grover.ket -o build/grover.qasm
+./build/ket compile examples/teleportation.ket
+make serve
 ```
 
-`run` reports sampled counts. `inspect` reports the complex amplitudes before terminal measurements, so interference and phase are visible directly.
+Open the [local playground](http://127.0.0.1:8417) after starting the server. The browser runs the C compiler and simulator as WebAssembly in a worker. The checked-in browser engine can be served as static files.
 
-## a ket program
+## hardware
 
-```ket
-gate entangle(a, b) {
-  H a
-  CNOT a, b
-}
+The CLI uses IBM Cloud IAM and Sampler V2. Set an IBM Cloud API key, instance CRN and device name, then choose `--backend ibm` or write `on ibm` in the program. Ket routes the checked circuit onto the device’s connections and submits a hardware job. [IBM configuration and commands](docs/usage/cli.md#ibm-quantum)
 
-circuit bell() {
-  qubit q[2]
-  entangle q[0], q[1]
-  let result = measure q
-}
+## language and tests
 
-run bell() on local
-```
-
-the first qubit is the leftmost bit: this circuit produces `00` and `11`. use a fixed seed to reproduce a run. use `--json` on `run` or `inspect` for machine-readable results.
-
-## native status
-
-this is the first native implementation, not a complete replacement of every tool in the repository. it supports:
-
-- single-qubit gates, rotations, cnot, cz, swap, and toffoli
-- custom unitary gates, angle/bitstring circuit parameters, and bounded repeats
-- measurement with classical feed-forward, including [teleportation](./examples/teleportation.ket)
-- qft, phase oracles, and grover diffusion lowered to shared primitive operations
-- source-location errors, deterministic sampling, and openqasm export
-
-the state-vector simulator supports up to 20 qubits. exact oracle/diffusion expansion is limited to 10 qubits and all circuits to 100,000 expanded operations. unsupported exports fail explicitly.
-
-the native cli runs locally; it does not submit hardware jobs or power the browser playground yet. `compile` emits openqasm, not a cpu executable. see the [native guide](./docs/native.md) for language rules, limits, and the c api.
-
-## development
+The simulator supports 20 qubits, mid-circuit measurements, classical feed-forward, custom gates, rotations, QFT, phase oracles and Grover diffusion. The [language and C API reference](docs/native.md) records the gate conventions and limits.
 
 ```sh
-make test       # python 3, standard library only
-make sanitise   # clang address and undefined-behaviour sanitisers
+make test
+make sanitise
+make test-web
 ```
 
-tests compare qft against the analytic fourier transform, grover against its success formula, and exported operations against a separate dense-matrix evaluator. they also exercise teleportation, measurement ordering, compiler limits, malformed input, and file handling.
+The native tests include an isolated IBM service with dummy credentials. The browser parity test compares the shipped WebAssembly with the C executable. [Build and test instructions](CONTRIBUTING.md)
 
-## typescript implementation and playground
-
-the original implementation remains in [`src`](./src), with the browser app in [`playground`](./playground). it has its own simulator and exporter; it does not use the native core.
-
-```sh
-pnpm install --frozen-lockfile
-pnpm build
-pnpm dev
-```
-
-the [typescript installation guide](./docs/getting-started/installation.md) covers its cli, playground, and ibm configuration. the native fixes and limits described above apply to `build/ket`.
-
-## project layout
-
-- [`native`](./native): c frontend, circuit representation, simulator, exporter, and tests
-- [`examples`](./examples): runnable quantum programs
-- [`src`](./src), [`tests`](./tests), [`playground`](./playground): original typescript implementation
-- [`docs`](./docs/README.md): native and typescript documentation
-
-## maintainer and licence
-
-ket is maintained by Abedalaziz Alzweidi. released under apache-2.0; see [`LICENSE`](./LICENSE), [`NOTICE`](./NOTICE), and [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+Maintained by Abedalaziz Alzweidi. [Apache 2.0 licence](LICENSE) · [Notice](NOTICE)

@@ -1,5 +1,6 @@
 {
-  "buildCommand": "cd playground && pnpm install && pnpm build",
-  "outputDirectory": "playground/dist",
-  "framework": null
+  "framework": null,
+  "installCommand": "",
+  "buildCommand": "make playground",
+  "outputDirectory": "build/playground"
 }

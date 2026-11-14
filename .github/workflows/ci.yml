@@ -1,80 +1,36 @@
 name: ci
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-  workflow_dispatch:
-
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
-
 jobs:
   native:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
     steps:
-      - name: checkout
-        uses: actions/checkout@v4
-
-      - name: build and test native toolchain
-        run: make test
-
-      - name: address and undefined-behaviour sanitisers
-        run: make sanitise
-
-  test:
+      - uses: actions/checkout@v4
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libjson-c-dev pkg-config
+      - if: runner.os == 'macOS'
+        run: brew install json-c pkg-config
+      - run: make test
+      - run: make sanitise
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: make test-web
+  playground:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-
     steps:
-      - name: checkout
-        uses: actions/checkout@v4
-
-      - name: setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libjson-c-dev pkg-config
+      - uses: actions/setup-node@v4
         with:
-          version: 9
-
-      - name: setup node
-        uses: actions/setup-node@v4
+          node-version: 22
+      - uses: mymindstorm/setup-emsdk@v14
         with:
-          node-version: 20
-          cache: pnpm
-
-      - name: install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: lint
-        run: pnpm lint
-
-      - name: typecheck
-        run: pnpm typecheck
-
-      - name: test
-        run: pnpm test
-
-      - name: test coverage
-        run: pnpm test:coverage
-
-      - name: build cli
-        run: pnpm build
-
-      - name: build playground
-        run: pnpm build:playground
-
-      - name: upload coverage artefact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage/lcov.info
-          if-no-files-found: error
+          version: 4.0.23
+      - run: make wasm
+      - run: git diff --exit-code -- playground/engine
+      - run: make test-web playground

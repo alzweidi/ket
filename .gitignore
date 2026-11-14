@@ -1,9 +1,5 @@
-node_modules
-dist
-coverage
-.DS_Store
-.pnpm-store
-playground/dist
-.env
-.claude-flow
 build/
+.env
+.DS_Store
+.claude-flow/
+__pycache__/

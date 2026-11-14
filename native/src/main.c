@@ -1,4 +1,7 @@
-#include "ket.h"
+#include "output.h"
+#include "ibm.h"
+
+bool ket_viz(const char *source, bool print_only);
 #include <errno.h>
 #include <inttypes.h>
 #include <math.h>
@@ -10,13 +13,15 @@
 static void usage(FILE *out) {
     fputs("Ket " KET_VERSION " — native quantum language toolchain\n\n"
           "  ket check FILE                         check and lower a circuit\n"
-          "  ket run FILE [--shots N] [--seed N] [--json]\n"
+          "  ket run FILE [--backend local|ibm] [--shots N] [--seed N] [--json]\n"
           "  ket inspect FILE [--json]              amplitudes before terminal measurements\n"
           "  ket compile FILE [-o FILE]             emit OpenQASM 2.0\n"
+          "  ket viz FILE [--url]                   open the circuit in the playground\n"
+          "  ket auth --ibm KEY --instance CRN --backend NAME\n"
           "  ket --version\n\n"
           "Use - as FILE to read stdin; -o - writes stdout.\n"
           "Default shots: 1024. Maximum qubits: 20.\n"
-          "run is a local simulator; compile exports circuits for external hardware tools.\n", out);
+          "Use --seed for repeatable local shots. IBM jobs use IBM Quantum credentials.\n", out);
 }
 static bool number(const char *s, uint64_t *value) {
     if (!s || !*s) return false;
@@ -48,65 +53,32 @@ static char *read_source(const char *path) {
     }
     source[n] = 0; return source;
 }
-static void bitstring(size_t n, unsigned width, char *out) {
-    for (unsigned i = 0; i < width; i++) out[i] = ((n >> (width-1-i)) & 1) ? '1' : '0';
-    out[width] = 0;
-}
-static void print_state(const KetState *s, bool json) {
-    char bits[KET_MAX_QUBITS+1]; bool first = true;
-    if (json) printf("{\"qubits\":%u,\"basis_order\":\"declaration order, first qubit is MSB\",\"amplitudes\":[", s->qubits);
-    else printf("%u qubits · state before terminal measurements\n\n%-22s %14s %14s %14s\n", s->qubits, "basis", "real", "imaginary", "probability");
-    for (size_t i = 0; i < s->size; i++) {
-        double re = creal(s->amplitudes[i]), im = cimag(s->amplitudes[i]), p = re*re + im*im;
-        if (p < 1e-14) continue;
-        bitstring(i, s->qubits, bits);
-        if (json) printf("%s{\"basis\":\"%s\",\"real\":%.17g,\"imaginary\":%.17g,\"probability\":%.17g}", first ? "" : ",", bits, re, im, p);
-        else printf("%-22s %14.9f %14.9f %14.9f\n", bits, re, im, p);
-        first = false;
-    }
-    if (json) puts("]}");
-}
-static void print_result(const KetProgram *p, const KetResult *r, bool json) {
-    char bits[KET_MAX_QUBITS+1]; bool first = true;
-    if (json) printf("{\"qubits\":%u,\"shots\":%" PRIu64 ",\"seed\":%" PRIu64 ",\"measurements\":[", p->qubits, r->shots, r->seed);
-    else printf("%u qubits · %" PRIu64 " shots · seed %" PRIu64 "\nMeasurements:", p->qubits, r->shots, r->seed);
-    for (unsigned i = 0; i < p->nclassical; i++) {
-        if (json) printf("%s{\"name\":\"%s\",\"width\":%u}", i ? "," : "", p->classical[i].name, p->classical[i].width);
-        else printf(" %s[%u]", p->classical[i].name, p->classical[i].width);
-    }
-    if (json) fputs("],\"counts\":{", stdout); else fputs("\n\n", stdout);
-    for (size_t i = 0; i < ((size_t)1 << r->bits); i++) if (r->counts[i]) {
-        bitstring(i, r->bits, bits);
-        if (json) printf("%s\"%s\":%" PRIu64, first ? "" : ",", bits, r->counts[i]);
-        else {
-            double fraction = (double)r->counts[i] / (double)r->shots;
-            printf("  %s  %8" PRIu64 "  %6.2f%%  ", bits, r->counts[i], fraction*100);
-            unsigned bars = (unsigned)lround(fraction*30);
-            for (unsigned j = 0; j < bars; j++) fputc('#', stdout);
-            fputc('\n', stdout);
-        }
-        first = false;
-    }
-    if (json) puts("}}");
-}
-
 int main(int argc, char **argv) {
     if (argc == 1 || !strcmp(argv[1], "--help") || !strcmp(argv[1], "-h")) { usage(stdout); return 0; }
     if (!strcmp(argv[1], "--version")) { puts("ket " KET_VERSION); return 0; }
-    const char *command = argv[1], *path = NULL, *output = NULL;
+    if (!strcmp(argv[1], "auth")) return ibm_auth(argc, argv);
+    const char *command = argv[1], *path = NULL, *output = NULL, *backend = NULL;
+    bool viz = !strcmp(command, "viz"), url = false, explicit_seed = false;
     bool run = !strcmp(command, "run"), inspect = !strcmp(command, "inspect"),
          compile = !strcmp(command, "compile"), check = !strcmp(command, "check"), json = false;
-    if (!run && !inspect && !compile && !check) { fprintf(stderr, "ket: unknown command '%s'\n", command); usage(stderr); return 2; }
+    if (!run && !inspect && !compile && !check && !viz) { fprintf(stderr, "ket: unknown command '%s'\n", command); usage(stderr); return 2; }
     uint64_t shots = 1024, seed = (uint64_t)time(NULL);
     for (int i = 2; i < argc; i++) {
         const char *arg = argv[i];
         if (!strcmp(arg, "--json") && (run || inspect)) json = true;
-        else if ((!strcmp(arg, "--shots") || !strcmp(arg, "--seed")) && run) {
+        else if (viz && !strcmp(arg, "--url")) url = true;
+        else if (run && !strcmp(arg, "--backend")) {
+            if (++i == argc || backend || (strcmp(argv[i], "local") && strcmp(argv[i], "ibm"))) {
+                fputs("ket: --backend requires local or ibm\n", stderr); return 2;
+            }
+            backend = argv[i];
+        } else if ((!strcmp(arg, "--shots") || !strcmp(arg, "--seed")) && run) {
             bool is_shots = !strcmp(arg, "--shots"); uint64_t value;
             if (++i == argc || !number(argv[i], &value) || (is_shots && (value < 1 || value > 1000000))) {
                 fprintf(stderr, "ket: %s requires %s\n", arg, is_shots ? "an integer from 1 to 1000000" : "an unsigned 64-bit integer"); return 2;
             }
-            if (is_shots) shots = value; else seed = value;
+            if (is_shots) shots = value;
+            else { seed = value; explicit_seed = true; }
         } else if ((!strcmp(arg, "-o") || !strcmp(arg, "--output")) && compile) {
             if (++i == argc || output) { fputs("ket: provide one output path\n", stderr); return 2; }
             output = argv[i];
@@ -122,20 +94,26 @@ int main(int argc, char **argv) {
     KetProgram *program; KetDiagnostic error;
     if (!ket_compile(source, &program, &error)) { ket_diagnostic(stderr, path, source, &error); free(source); return 1; }
     bool ok = true;
-    if (run && program->remote) {
-        fputs("ket: 'on ibm' requests remote execution; this native milestone runs locally only.\nUse ket compile to export, or change the source backend to local.\n", stderr);
-        ok = false;
+    KetProgramInfo info = ket_program_info(program);
+    bool hardware = run && (backend ? !strcmp(backend, "ibm") : info.remote);
+    if (hardware && explicit_seed) {
+        fputs("ket: --seed is available for local simulation only\n", stderr); ok = false;
+    } else if (viz) {
+        ok = ket_viz(source, url);
     } else if (check) {
-        printf("OK: %u qubits, %zu lowered operations, %u measurement bindings\n", program->qubits, program->count, program->nclassical);
+        printf("OK: %u qubit%s, %zu lowered operation%s, %u measurement binding%s\n",
+               info.qubits, info.qubits == 1 ? "" : "s", info.operations, info.operations == 1 ? "" : "s",
+               info.measurements, info.measurements == 1 ? "" : "s");
     } else if (run) {
         KetResult result;
-        ok = ket_run(program, shots, seed, &result, &error);
-        if (ok) { print_result(program, &result, json); ket_result_free(&result); }
+        ok = hardware ? ibm_run(program, (unsigned)shots, &result, &error) :
+                        ket_run(program, shots, seed, &result, &error);
+        if (ok) { ket_print_result(stdout, program, &result, json, hardware); ket_result_free(&result); }
         else ket_diagnostic(stderr, path, source, &error);
     } else if (inspect) {
         KetState state;
         ok = ket_inspect(program, &state, &error);
-        if (ok) { print_state(&state, json); ket_state_free(&state); }
+        if (ok) { ket_print_state(stdout, &state, json); ket_state_free(&state); }
         else ket_diagnostic(stderr, path, source, &error);
     } else if (compile) {
         /* finish export checks before opening an existing output file. */

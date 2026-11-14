@@ -1,0 +1,45 @@
+:root {
+  color-scheme: dark;
+  font: 16px/1.55 'IBM Plex Sans', system-ui, sans-serif;
+  color: #e6edf6;
+  background: #071019;
+  --line: #293847;
+  --muted: #a4b5c7;
+  --accent: #a3dcff;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+* { box-sizing: border-box }
+body { margin: 0 }
+main { max-width: 1500px; margin: auto; padding: clamp(1rem, 3vw, 3rem) }
+header, .controls, .heading, nav { display: flex; align-items: center; gap: .7rem; flex-wrap: wrap }
+header { justify-content: space-between; margin: 0 0 1.6rem }
+h1 { display: flex; align-items: center; gap: .7rem; font-size: clamp(1.4rem, 3vw, 2rem); letter-spacing: -.04em; margin: 0 }
+h2 { font-size: 1rem; margin: 0 }
+label { color: var(--muted) }
+input, select, button { border: 1px solid var(--line); border-radius: 5px; color: inherit; background: #142231; padding: .42rem .65rem; font: inherit }
+button { cursor: pointer }
+button:hover, button[aria-pressed=true] { color: var(--accent); border-color: #6da5c5 }
+button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px }
+button.primary { background: var(--accent); border-color: transparent; color: #071019; font-weight: 650 }
+#shots { width: 6rem }
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem }
+section { background: #0c1722; border: 1px solid var(--line); border-radius: 12px; min-width: 0; overflow: hidden }
+.heading, nav { min-height: 4rem; padding: .75rem 1.25rem; border-bottom: 1px solid var(--line) }
+.heading { justify-content: space-between }
+.heading label { color: inherit }
+#filename, summary, .meta { color: var(--muted); font-size: .85rem }
+.editor { display: flex; flex-direction: column }
+textarea { width: 100%; flex: 1; min-height: 25rem; resize: vertical; border: 0; padding: 1.2rem; background: #09131e; color: #d9ecf7; font: .95rem/1.65 var(--mono); tab-size: 2 }
+#status { border-top: 1px solid var(--line); padding: .7rem 1.25rem; color: var(--muted); white-space: pre-wrap }
+#status.error { color: #ffa28d }
+.output > div { max-height: 70vh; min-height: 12rem; padding: 1.25rem; overflow: auto }
+nav button { background: transparent }
+pre, code, td:first-child { font-family: var(--mono) }
+pre { font-size: .9rem; line-height: 1.6; margin: .5rem 0; width: max-content }
+table { width: 100%; border-collapse: collapse; text-align: left; font-variant-numeric: tabular-nums }
+th, td { padding: .4rem; border-bottom: 1px solid var(--line) }
+th { color: var(--muted); font-weight: 500 }
+meter { width: 100%; accent-color: var(--accent) }
+svg { display: block; color: var(--accent); font: 13px var(--mono) }
+details { margin-top: 1rem }
+@media (max-width: 800px) { .workspace { grid-template-columns: 1fr } textarea { min-height: 19rem } }

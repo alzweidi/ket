@@ -1,4 +1,4 @@
-#include "ket.h"
+#include "ir.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -86,7 +86,8 @@ static unsigned measure(KetState *s, unsigned q, uint64_t *rng) {
 }
 
 bool ket_inspect(const KetProgram *p, KetState *s, KetDiagnostic *e) {
-    memset(e, 0, sizeof(*e)); memset(s, 0, sizeof(*s));
+    memset(s, 0, sizeof(*s));
+    if (!ket_validate(p, e)) return false;
     bool seen_measure = false;
     for (size_t i = 0; i < p->count; i++) {
         if (p->ops[i].kind == K_MEASURE) seen_measure = true;
@@ -99,6 +100,13 @@ bool ket_inspect(const KetProgram *p, KetState *s, KetDiagnostic *e) {
     if (!init_state(p->qubits, s, e)) return false;
     for (size_t i = 0; i < p->count && p->ops[i].kind != K_MEASURE; i++) apply(s, &p->ops[i]);
     return true;
+}
+
+static uint32_t pack_result(const KetProgram *p, const uint32_t *values) {
+    uint32_t result = 0;
+    for (unsigned i = 0; i < p->nclassical; i++)
+        result = (result << p->classical[i].width) | values[i];
+    return result;
 }
 
 /* terminal measurements can sample one distribution without collapsing a fresh
@@ -120,19 +128,22 @@ static bool sample_terminal(const KetProgram *p, const KetState *s, size_t first
             if (cdf[middle] > target) high = middle;
             else low = middle+1;
         }
-        uint32_t outcome = 0;
+        uint32_t values[KET_MAX_QUBITS] = {0};
         for (size_t i = first; i < p->count; i++) {
             const KetOp *op = &p->ops[i];
+            uint32_t value = 0;
             for (unsigned j = 0; j < op->width; j++)
-                outcome = (outcome << 1) | ((low & mask(s, op->q[0]+j)) != 0);
+                value = (value << 1) | ((low & mask(s, op->q[0]+j)) != 0);
+            values[op->classical] = value;
         }
-        r->counts[outcome]++;
+        r->counts[pack_result(p, values)]++;
     }
     free(cdf); return true;
 }
 
 bool ket_run(const KetProgram *p, uint64_t shots, uint64_t seed, KetResult *r, KetDiagnostic *e) {
-    memset(e, 0, sizeof(*e)); memset(r, 0, sizeof(*r));
+    memset(r, 0, sizeof(*r));
+    if (!ket_validate(p, e)) return false;
     if (shots < 1 || shots > 1000000) { strcpy(e->message, "shots must be between 1 and 1000000"); return false; }
     KetState s;
     if (!init_state(p->qubits, &s, e)) return false;
@@ -141,7 +152,8 @@ bool ket_run(const KetProgram *p, uint64_t shots, uint64_t seed, KetResult *r, K
     if (!r->counts) { ket_state_free(&s); strcpy(e->message, "out of memory allocating counts"); return false; }
 
     size_t first_measure = 0;
-    while (first_measure < p->count && p->ops[first_measure].kind != K_MEASURE) first_measure++;
+    while (first_measure < p->count && p->ops[first_measure].kind != K_MEASURE &&
+           p->ops[first_measure].kind != K_IF) first_measure++;
     for (size_t i = 0; i < first_measure; i++) apply(&s, &p->ops[i]);
     bool terminal = true;
     for (size_t i = first_measure; i < p->count; i++) if (p->ops[i].kind != K_MEASURE) terminal = false;
@@ -168,9 +180,7 @@ bool ket_run(const KetProgram *p, uint64_t shots, uint64_t seed, KetResult *r, K
                 classical[op->classical] = bits;
             } else apply(&s, op);
         }
-        uint32_t outcome = 0;
-        for (unsigned i = 0; i < p->nclassical; i++) outcome = (outcome << p->classical[i].width) | classical[i];
-        r->counts[outcome]++;
+        r->counts[pack_result(p, classical)]++;
     }
     free(prefix); ket_state_free(&s); return true;
 }

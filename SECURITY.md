@@ -2,7 +2,7 @@
 
 ## supported versions
 
-the latest `main` branch is the supported code line for now. if npm releases are published later, the latest published release will be treated as the supported package version.
+the latest `main` branch is the supported code line for now.
 
 ## reporting a vulnerability
 

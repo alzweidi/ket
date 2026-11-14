@@ -1,4 +1,4 @@
-#include "ket.h"
+#include "ir.h"
 #include <string.h>
 
 static void prefix(FILE *out, const KetOp *condition) {
@@ -11,7 +11,7 @@ static void write_cx(FILE *out, const KetOp *condition, unsigned control, unsign
 }
 
 bool ket_qasm(const KetProgram *p, FILE *out, KetDiagnostic *e) {
-    memset(e, 0, sizeof(*e));
+    if (!ket_validate(p, e)) return false;
     /* openqasm 2 cannot combine arbitrary conditions; reject before writing. */
     size_t conditional_end = 0;
     for (size_t i = 0; i < p->count; i++) if (p->ops[i].kind == K_IF) {

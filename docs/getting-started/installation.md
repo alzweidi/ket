@@ -1,60 +1,29 @@
 # installation
 
-this page covers the typescript cli and browser playground. for the c executable, start with the [native guide](../native.md).
+Ket builds on macOS and Linux using a C17 compiler, Make, pkg-config, libcurl and json-c.
 
-## prerequisites
+Install the macOS libraries with Homebrew.
 
-- node.js 20 or later
-- pnpm 9 or later
-
-## install and build
-
-```bash
-pnpm install
-pnpm build
-pnpm build:playground
+```sh
+brew install pkg-config json-c
+make
 ```
 
-the cli bundle is written to `dist/ket.js`. the playground build is written to `playground/dist`.
+Install the Debian or Ubuntu development packages with APT.
 
-## run your first program
-
-run one of the included examples locally:
-
-```bash
-node dist/ket.js run examples/bell-state.ket --shots 32
+```sh
+sudo apt-get install build-essential pkg-config libcurl4-openssl-dev libjson-c-dev
+make
 ```
 
-compile the same source file to openqasm 2.0:
-
-```bash
-node dist/ket.js compile examples/bell-state.ket
+```sh
+./build/ket --version
+./build/ket check examples/bell-state.ket
+./build/ket run examples/bell-state.ket --shots 1024
 ```
 
-open the hosted playground with a local source file loaded:
+## playground
 
-```bash
-node dist/ket.js viz examples/teleportation.ket
-```
+`make playground` assembles the static site in `build/playground`. Use `make serve` with Python 3 to open it on [localhost](http://127.0.0.1:8417). Its static files can also be copied to a web server.
 
-## optional ibm quantum setup
-
-store credentials in `~/.ket/config`:
-
-```bash
-node dist/ket.js auth --ibm <token> --instance ibm-q/open/main --backend ibm_brisbane
-```
-
-or copy the repository example file and fill in the same values:
-
-```bash
-cp .env.example .env
-```
-
-shell variables and `.env` values override the stored config on read.
-
-## where to go next
-
-- read [../language/overview.md](../language/overview.md) for the language surface
-- read [../usage/cli.md](../usage/cli.md) for command details and backend rules
-- browse [`examples`](../../examples) for complete sample programs
+To rebuild the browser engine from C, activate Emscripten 4.0.23, run `make wasm`, then `make test-web`. The latter compares the new module with the native executable using Node. Both tools are used in development. [Emscripten SDK setup](https://emscripten.org/docs/getting_started/downloads.html)

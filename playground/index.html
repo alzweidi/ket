@@ -1,13 +1,45 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ket Playground | Quantum Language Workbench</title>
-    <link rel="icon" href="/favicon.svg" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-  </html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08111c">
+  <title>Ket Playground</title>
+  <link rel="icon" href="./favicon.svg">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <main>
+    <header>
+      <h1><img src="./favicon.svg" alt="" width="38" height="38"> Ket Playground</h1>
+      <div class="controls">
+        <label>Example <select id="example">
+          <option value="bell-state">Bell state</option><option value="grover">Grover’s search</option>
+          <option value="qft">Quantum Fourier transform</option><option value="teleportation">Teleportation</option>
+          <option value="" disabled>Custom circuit</option>
+        </select></label>
+        <label>Shots <input id="shots" type="number" min="1" max="1000000" value="1024"></label>
+        <button id="run" class="primary">Run</button><button id="compile">Compile</button><button id="share">Share</button>
+      </div>
+    </header>
+    <div class="workspace">
+      <section class="editor">
+        <div class="heading"><h2><label for="source">Source</label></h2><span id="filename"></span></div>
+        <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="status"></textarea>
+        <div id="status" role="status">Loading the compiler…</div>
+      </section>
+      <section class="output">
+        <nav aria-label="Output views">
+          <button data-view="results" aria-pressed="true">Results</button>
+          <button data-view="circuit" aria-pressed="false">Circuit</button>
+          <button data-view="qasm" aria-pressed="false">OpenQASM</button>
+        </nav>
+        <div id="results"></div>
+        <div id="circuit" hidden></div>
+        <div id="qasm" hidden><button id="copy" hidden>Copy OpenQASM</button><pre></pre></div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

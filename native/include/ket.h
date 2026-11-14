@@ -15,34 +15,20 @@
 
 typedef struct { size_t offset, length; unsigned line, column; } KetSpan;
 typedef struct { KetSpan span; char message[256]; } KetDiagnostic;
-typedef enum {
-    K_H, K_X, K_Y, K_Z, K_S, K_T, K_RX, K_RY, K_RZ,
-    K_CX, K_CZ, K_SWAP, K_CCX, K_CP, K_PHASE,
-    K_MEASURE, K_IF
-} KetOpKind;
-
-/* backends receive resolved qubit indices. */
-typedef struct {
-    KetOpKind kind;
-    unsigned q[3], width, classical;
-    uint32_t value;
-    double angle;
-    size_t end;
-    KetSpan span;
-} KetOp;
-
-typedef struct { char name[KET_NAME]; unsigned width; } KetClassical;
-typedef struct {
-    unsigned qubits, bits, nclassical;
-    KetClassical classical[KET_MAX_QUBITS];
-    KetOp *ops;
-    size_t count, capacity;
-    bool remote;
-} KetProgram;
+typedef struct KetProgram KetProgram;
 
 /* the program owns its storage; the caller can free the source after compilation. */
 bool ket_compile(const char *source, KetProgram **out, KetDiagnostic *error);
 void ket_program_free(KetProgram *program);
+
+typedef struct {
+    unsigned qubits, bits, measurements;
+    size_t operations;
+    bool remote;
+} KetProgramInfo;
+KetProgramInfo ket_program_info(const KetProgram *program);
+/* the name belongs to the program. an unknown index returns null. */
+const char *ket_measurement_name(const KetProgram *program, unsigned index, unsigned *width);
 void ket_diagnostic(FILE *out, const char *path, const char *source,
                     const KetDiagnostic *error);
 

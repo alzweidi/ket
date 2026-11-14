@@ -10,7 +10,7 @@ import sys
 import tempfile
 import unittest
 
-BINARY = Path(sys.argv.pop(1)).resolve()
+BINARY = Path(sys.argv.pop(1)).resolve() if __name__ == "__main__" else None
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -353,9 +353,11 @@ class NativeKet(unittest.TestCase):
                         ("--seed",),("--unknown",)]:
             result = invoke("run", "qubit q", *options)
             self.assertEqual(result.returncode, 2)
-        result = invoke("run", "circuit c() { qubit q } run c() on ibm")
+        source = "circuit c() { qubit q } run c() on ibm"
+        self.assertEqual(self.good("run", source, "--backend", "local", "--shots", "1", "--seed", "0", "--json").count('"0":1'), 1)
+        result = invoke("run", source, "--seed", "1")
         self.assertEqual(result.returncode, 1)
-        self.assertIn("remote execution", result.stderr)
+        self.assertIn("local simulation", result.stderr)
         result = invoke("check", "qubit q\x00X q")
         self.assertEqual(result.returncode, 1)
         self.assertIn("NUL", result.stderr)
