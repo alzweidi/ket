@@ -12,7 +12,7 @@ CLI = native/src/main.c native/src/output.c native/src/viz.c native/src/config.c
 HEADERS = native/include/ket.h native/src/ir.h native/src/output.h native/src/ibm.h
 WEB = playground/engine
 
-.PHONY: all test sanitise wasm playground serve test-web fringes clean
+.PHONY: all test sanitise wasm playground serve test-web fringes wavepacket clean
 all: $(BUILD)/ket
 
 $(BUILD):
@@ -27,7 +27,7 @@ $(BUILD)/test-ir: $(CORE) native/tests/test_ir.c $(HEADERS) | $(BUILD)
 $(BUILD)/test-ibm: $(CORE) $(CLI) $(HEADERS) | $(BUILD)
 	$(CC) $(CPPFLAGS) $(IBM_CFLAGS) $(CFLAGS) -DKET_IBM_TEST $(CORE) $(CLI) $(LDFLAGS) $(LDLIBS) $(IBM_LIBS) -o $@
 
-test: $(BUILD)/ket $(BUILD)/test-ir $(BUILD)/test-ibm $(BUILD)/fringes
+test: $(BUILD)/ket $(BUILD)/test-ir $(BUILD)/test-ibm $(BUILD)/fringes $(BUILD)/wavepacket
 	$(BUILD)/fringes examples/fringes.ket --frames > /dev/null
 	$(BUILD)/test-ir
 	python3 native/tests/test_native.py $(BUILD)/ket
@@ -61,6 +61,12 @@ $(BUILD)/fringes: $(CORE) examples/terminal/fringes.c $(HEADERS) | $(BUILD)
 
 fringes: $(BUILD)/fringes
 	$(BUILD)/fringes examples/fringes.ket
+
+$(BUILD)/wavepacket: $(CORE) examples/terminal/packet.c $(HEADERS) | $(BUILD)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(CORE) examples/terminal/packet.c $(LDFLAGS) $(LDLIBS) -o $@
+
+wavepacket: $(BUILD)/wavepacket
+	$(BUILD)/wavepacket examples/packet.ket
 
 clean:
 	rm -rf build

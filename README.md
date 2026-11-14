@@ -28,7 +28,19 @@ make serve
 
 Open the [local playground](http://127.0.0.1:8417) after starting the server. The browser runs the C compiler and simulator as WebAssembly in a worker. The checked-in browser engine can be served as static files.
 
-## terminal experiment
+## wave packet in the terminal
+
+```sh
+make wavepacket
+```
+
+The terminal shows the Ket source and a seven-qubit particle moving along a line. The Gaussian packet strikes a barrier at sites 64–67 and splits. The plot shows the wave amplitude `|ψ(x)|`. The percentages below it are sums of `|ψ(x)|²` to the left, inside and to the right of the barrier.
+
+The [circuit](examples/packet.ket) contains the complete state preparation and evolution. `gaussian` prepares a truncated Gaussian in momentum space. `qft x` converts it to position. Each of the 208 time steps applies the barrier phase, transforms to momentum, applies the free-particle phase and transforms back. The C viewer runs that same circuit at successive step counts and plots the state before measurement.
+
+The calculation uses a periodic grid of 128 sites with unit spacing, mass and ℏ. Each step advances time by 0.25 and the barrier height is 0.7. Use a terminal at least 66 columns wide and 47 rows tall. To inspect the final amplitudes directly, run `./build/ket inspect examples/packet.ket`.
+
+## two-path interference
 
 ```sh
 make fringes

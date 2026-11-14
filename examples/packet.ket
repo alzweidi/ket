@@ -1,0 +1,436 @@
+// a gaussian packet meets a barrier at sites 64 to 67.
+circuit packet(steps: angle) {
+  qubit x[7]
+  gaussian x[2], x[3], x[4], x[5], x[6]
+  qft x
+
+  repeat steps {
+    barrier x[0], x[1], x[2], x[3], x[4]
+    free_step x[0], x[1], x[2], x[3], x[4], x[5], x[6]
+    qft x
+  }
+  let position = measure x
+}
+
+run packet(208)
+
+// momentum modes 16 to 31 give a gaussian centred at x = 30 after the fourier transform.
+gate gaussian(c, d, e, f, g) {
+  X c
+  Ry(2.328734350985507) d
+  Ry(1.925442218031054) e
+  CNOT d, e
+  Ry(1.039311051203479) e
+  CNOT d, e
+  Ry(1.889626899087878) f
+  CNOT e, f
+  Ry(0.3188305722929809) f
+  CNOT d, f
+  Ry(-0.09500336522762715) f
+  CNOT e, f
+  Ry(0.7326645098135891) f
+  CNOT d, f
+  Ry(1.786276633897867) g
+  CNOT f, g
+  Ry(0.1067724462356813) g
+  CNOT e, g
+  Ry(-0.003914560140764162) g
+  CNOT f, g
+  Ry(0.2154803071029708) g
+  CNOT d, g
+  Ry(-0.02311711662732394) g
+  CNOT f, g
+  Ry(-0.0109089294472757) g
+  CNOT e, g
+  Ry(-0.0109089294472757) g
+  CNOT f, g
+  Ry(0.4540777308332653) g
+  CNOT d, g
+  Rz(1.570796326794898) c
+  Rz(0.7853981633974492) d
+  Rz(0.3926990816987246) e
+  Rz(-2.945243112740431) f
+  Rz(-1.472621556370215) g
+}
+
+// inverse fourier transform, including the reversal of bit order.
+gate to_momentum(a, b, c, d, e, f, g) {
+  SWAP a, g
+  SWAP b, f
+  SWAP c, e
+  H g
+  Rz(-0.7853981633974483) g
+  Rz(-0.7853981633974483) f
+  CNOT g, f
+  Rz(0.7853981633974483) f
+  CNOT g, f
+  H f
+  Rz(-0.3926990816987241) g
+  Rz(-0.3926990816987241) e
+  CNOT g, e
+  Rz(0.3926990816987241) e
+  CNOT g, e
+  Rz(-0.7853981633974483) f
+  Rz(-0.7853981633974483) e
+  CNOT f, e
+  Rz(0.7853981633974483) e
+  CNOT f, e
+  H e
+  Rz(-0.1963495408493621) g
+  Rz(-0.1963495408493621) d
+  CNOT g, d
+  Rz(0.1963495408493621) d
+  CNOT g, d
+  Rz(-0.3926990816987241) f
+  Rz(-0.3926990816987241) d
+  CNOT f, d
+  Rz(0.3926990816987241) d
+  CNOT f, d
+  Rz(-0.7853981633974483) e
+  Rz(-0.7853981633974483) d
+  CNOT e, d
+  Rz(0.7853981633974483) d
+  CNOT e, d
+  H d
+  Rz(-0.09817477042468103) g
+  Rz(-0.09817477042468103) c
+  CNOT g, c
+  Rz(0.09817477042468103) c
+  CNOT g, c
+  Rz(-0.1963495408493621) f
+  Rz(-0.1963495408493621) c
+  CNOT f, c
+  Rz(0.1963495408493621) c
+  CNOT f, c
+  Rz(-0.3926990816987241) e
+  Rz(-0.3926990816987241) c
+  CNOT e, c
+  Rz(0.3926990816987241) c
+  CNOT e, c
+  Rz(-0.7853981633974483) d
+  Rz(-0.7853981633974483) c
+  CNOT d, c
+  Rz(0.7853981633974483) c
+  CNOT d, c
+  H c
+  Rz(-0.04908738521234052) g
+  Rz(-0.04908738521234052) b
+  CNOT g, b
+  Rz(0.04908738521234052) b
+  CNOT g, b
+  Rz(-0.09817477042468103) f
+  Rz(-0.09817477042468103) b
+  CNOT f, b
+  Rz(0.09817477042468103) b
+  CNOT f, b
+  Rz(-0.1963495408493621) e
+  Rz(-0.1963495408493621) b
+  CNOT e, b
+  Rz(0.1963495408493621) b
+  CNOT e, b
+  Rz(-0.3926990816987241) d
+  Rz(-0.3926990816987241) b
+  CNOT d, b
+  Rz(0.3926990816987241) b
+  CNOT d, b
+  Rz(-0.7853981633974483) c
+  Rz(-0.7853981633974483) b
+  CNOT c, b
+  Rz(0.7853981633974483) b
+  CNOT c, b
+  H b
+  Rz(-0.02454369260617026) g
+  Rz(-0.02454369260617026) a
+  CNOT g, a
+  Rz(0.02454369260617026) a
+  CNOT g, a
+  Rz(-0.04908738521234052) f
+  Rz(-0.04908738521234052) a
+  CNOT f, a
+  Rz(0.04908738521234052) a
+  CNOT f, a
+  Rz(-0.09817477042468103) e
+  Rz(-0.09817477042468103) a
+  CNOT e, a
+  Rz(0.09817477042468103) a
+  CNOT e, a
+  Rz(-0.1963495408493621) d
+  Rz(-0.1963495408493621) a
+  CNOT d, a
+  Rz(0.1963495408493621) a
+  CNOT d, a
+  Rz(-0.3926990816987241) c
+  Rz(-0.3926990816987241) a
+  CNOT c, a
+  Rz(0.3926990816987241) a
+  CNOT c, a
+  Rz(-0.7853981633974483) b
+  Rz(-0.7853981633974483) a
+  CNOT b, a
+  Rz(0.7853981633974483) a
+  CNOT b, a
+  H a
+}
+
+// free evolution for a quarter of a time unit, using signed momentum and hbar = mass = 1.
+gate kinetic(a, b, c, d, e, f, g) {
+  Rz(-1.23370055013617) a
+  Rz(-0.3084251375340424) b
+  Rz(-0.07710628438351061) c
+  Rz(-0.01927657109587765) d
+  Rz(-0.004819142773969413) e
+  Rz(-0.001204785693492353) f
+  Rz(-0.0003011964233730883) g
+  Rz(0.6168502750680849) a
+  Rz(0.6168502750680849) b
+  CNOT a, b
+  Rz(-0.6168502750680849) b
+  CNOT a, b
+  Rz(0.3084251375340424) a
+  Rz(0.3084251375340424) c
+  CNOT a, c
+  Rz(-0.3084251375340424) c
+  CNOT a, c
+  Rz(0.1542125687670212) a
+  Rz(0.1542125687670212) d
+  CNOT a, d
+  Rz(-0.1542125687670212) d
+  CNOT a, d
+  Rz(0.07710628438351061) a
+  Rz(0.07710628438351061) e
+  CNOT a, e
+  Rz(-0.07710628438351061) e
+  CNOT a, e
+  Rz(0.0385531421917553) a
+  Rz(0.0385531421917553) f
+  CNOT a, f
+  Rz(-0.0385531421917553) f
+  CNOT a, f
+  Rz(0.01927657109587765) a
+  Rz(0.01927657109587765) g
+  CNOT a, g
+  Rz(-0.01927657109587765) g
+  CNOT a, g
+  Rz(-0.1542125687670212) b
+  Rz(-0.1542125687670212) c
+  CNOT b, c
+  Rz(0.1542125687670212) c
+  CNOT b, c
+  Rz(-0.07710628438351061) b
+  Rz(-0.07710628438351061) d
+  CNOT b, d
+  Rz(0.07710628438351061) d
+  CNOT b, d
+  Rz(-0.0385531421917553) b
+  Rz(-0.0385531421917553) e
+  CNOT b, e
+  Rz(0.0385531421917553) e
+  CNOT b, e
+  Rz(-0.01927657109587765) b
+  Rz(-0.01927657109587765) f
+  CNOT b, f
+  Rz(0.01927657109587765) f
+  CNOT b, f
+  Rz(-0.009638285547938826) b
+  Rz(-0.009638285547938826) g
+  CNOT b, g
+  Rz(0.009638285547938826) g
+  CNOT b, g
+  Rz(-0.0385531421917553) c
+  Rz(-0.0385531421917553) d
+  CNOT c, d
+  Rz(0.0385531421917553) d
+  CNOT c, d
+  Rz(-0.01927657109587765) c
+  Rz(-0.01927657109587765) e
+  CNOT c, e
+  Rz(0.01927657109587765) e
+  CNOT c, e
+  Rz(-0.009638285547938826) c
+  Rz(-0.009638285547938826) f
+  CNOT c, f
+  Rz(0.009638285547938826) f
+  CNOT c, f
+  Rz(-0.004819142773969413) c
+  Rz(-0.004819142773969413) g
+  CNOT c, g
+  Rz(0.004819142773969413) g
+  CNOT c, g
+  Rz(-0.009638285547938826) d
+  Rz(-0.009638285547938826) e
+  CNOT d, e
+  Rz(0.009638285547938826) e
+  CNOT d, e
+  Rz(-0.004819142773969413) d
+  Rz(-0.004819142773969413) f
+  CNOT d, f
+  Rz(0.004819142773969413) f
+  CNOT d, f
+  Rz(-0.002409571386984707) d
+  Rz(-0.002409571386984707) g
+  CNOT d, g
+  Rz(0.002409571386984707) g
+  CNOT d, g
+  Rz(-0.002409571386984707) e
+  Rz(-0.002409571386984707) f
+  CNOT e, f
+  Rz(0.002409571386984707) f
+  CNOT e, f
+  Rz(-0.001204785693492353) e
+  Rz(-0.001204785693492353) g
+  CNOT e, g
+  Rz(0.001204785693492353) g
+  CNOT e, g
+  Rz(-0.0006023928467461766) f
+  Rz(-0.0006023928467461766) g
+  CNOT f, g
+  Rz(0.0006023928467461766) g
+  CNOT f, g
+}
+
+// a potential of 0.7 on sites 64 to 67 gives a phase of -0.175 per time step.
+gate barrier(a, b, c, d, e) {
+  X b
+  X c
+  X d
+  X e
+  Rz(-0.0109375) a
+  Rz(-0.0109375) b
+  CNOT a, b
+  Rz(0.0109375) b
+  CNOT a, b
+  Rz(-0.0109375) c
+  CNOT a, c
+  Rz(0.0109375) c
+  CNOT a, c
+  CNOT b, c
+  Rz(0.0109375) c
+  CNOT b, c
+  CNOT a, c
+  CNOT b, c
+  Rz(-0.0109375) c
+  CNOT b, c
+  CNOT a, c
+  Rz(-0.0109375) d
+  CNOT a, d
+  Rz(0.0109375) d
+  CNOT a, d
+  CNOT b, d
+  Rz(0.0109375) d
+  CNOT b, d
+  CNOT a, d
+  CNOT b, d
+  Rz(-0.0109375) d
+  CNOT b, d
+  CNOT a, d
+  CNOT c, d
+  Rz(0.0109375) d
+  CNOT c, d
+  CNOT a, d
+  CNOT c, d
+  Rz(-0.0109375) d
+  CNOT c, d
+  CNOT a, d
+  CNOT b, d
+  CNOT c, d
+  Rz(-0.0109375) d
+  CNOT c, d
+  CNOT b, d
+  CNOT a, d
+  CNOT b, d
+  CNOT c, d
+  Rz(0.0109375) d
+  CNOT c, d
+  CNOT b, d
+  CNOT a, d
+  Rz(-0.0109375) e
+  CNOT a, e
+  Rz(0.0109375) e
+  CNOT a, e
+  CNOT b, e
+  Rz(0.0109375) e
+  CNOT b, e
+  CNOT a, e
+  CNOT b, e
+  Rz(-0.0109375) e
+  CNOT b, e
+  CNOT a, e
+  CNOT c, e
+  Rz(0.0109375) e
+  CNOT c, e
+  CNOT a, e
+  CNOT c, e
+  Rz(-0.0109375) e
+  CNOT c, e
+  CNOT a, e
+  CNOT b, e
+  CNOT c, e
+  Rz(-0.0109375) e
+  CNOT c, e
+  CNOT b, e
+  CNOT a, e
+  CNOT b, e
+  CNOT c, e
+  Rz(0.0109375) e
+  CNOT c, e
+  CNOT b, e
+  CNOT a, e
+  CNOT d, e
+  Rz(0.0109375) e
+  CNOT d, e
+  CNOT a, e
+  CNOT d, e
+  Rz(-0.0109375) e
+  CNOT d, e
+  CNOT a, e
+  CNOT b, e
+  CNOT d, e
+  Rz(-0.0109375) e
+  CNOT d, e
+  CNOT b, e
+  CNOT a, e
+  CNOT b, e
+  CNOT d, e
+  Rz(0.0109375) e
+  CNOT d, e
+  CNOT b, e
+  CNOT a, e
+  CNOT c, e
+  CNOT d, e
+  Rz(-0.0109375) e
+  CNOT d, e
+  CNOT c, e
+  CNOT a, e
+  CNOT c, e
+  CNOT d, e
+  Rz(0.0109375) e
+  CNOT d, e
+  CNOT c, e
+  CNOT a, e
+  CNOT b, e
+  CNOT c, e
+  CNOT d, e
+  Rz(0.0109375) e
+  CNOT d, e
+  CNOT c, e
+  CNOT b, e
+  CNOT a, e
+  CNOT b, e
+  CNOT c, e
+  CNOT d, e
+  Rz(-0.0109375) e
+  CNOT d, e
+  CNOT c, e
+  CNOT b, e
+  CNOT a, e
+  X b
+  X c
+  X d
+  X e
+}
+
+// transform to momentum and apply the free-particle phase.
+gate free_step(a, b, c, d, e, f, g) {
+  to_momentum a, b, c, d, e, f, g
+  kinetic a, b, c, d, e, f, g
+}

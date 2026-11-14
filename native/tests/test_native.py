@@ -107,6 +107,30 @@ class NativeKet(unittest.TestCase):
                     self.assertTrue(all(bits.endswith("0") for bits in counts))
                 self.assertTrue(self.good("compile", source).startswith("OPENQASM 2.0;"))
 
+    def test_wave_packet_against_fourier_evolution(self):
+        source = (ROOT / "examples/packet.ket").read_text()
+        sites = 128
+        modes = range(16, 32)
+        packet = [sum(math.exp(-.25*((m-25.5)/2)**2) *
+                      cmath.exp(2j*math.pi*(x-30)*m/sites) for m in modes)
+                  for x in range(sites)]
+        norm = math.sqrt(sum(abs(a)**2 for a in packet))
+        packet = [a/norm for a in packet]
+        momenta = [2*math.pi*(k if k < sites//2 else k-sites)/sites for k in range(sites)]
+        kernel = [sum(cmath.exp(1j*k*dx-.125j*k*k) for k in momenta)/sites for dx in range(sites)]
+        for step in range(209):
+            if step in (0, 96, 144, 208):
+                state = self.state(source.replace("run packet(208)", f"run packet({step})"))
+                overlap = sum(a.conjugate()*b for a,b in zip(packet, state))
+                self.assertAlmostEqual(abs(overlap), 1, places=9)
+                for a,b in zip(packet, state):
+                    self.assertAlmostEqual(abs(a)**2, abs(b)**2, places=9)
+            if step == 208:
+                break
+            for x in range(64, 68):
+                packet[x] *= cmath.exp(-.175j)
+            packet = [sum(kernel[(x-y) % sites]*a for y,a in enumerate(packet)) for x in range(sites)]
+
     def test_existing_invalid_fixtures(self):
         for path in (ROOT / "tests/fixtures/invalid").glob("*.ket"):
             with self.subTest(path=path.name):
