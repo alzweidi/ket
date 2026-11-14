@@ -28,6 +28,14 @@ make serve
 
 Open the [local playground](http://127.0.0.1:8417) after starting the server. The browser runs the C compiler and simulator as WebAssembly in a worker. The checked-in browser engine can be served as static files.
 
+## terminal experiment
+
+```sh
+make fringes
+```
+
+This seven-qubit circuit sends two paths through a quantum Fourier transform onto 64 detector bins. Each frame plots shots from the C simulator. The horizontal position is the measurement and the vertical position spreads overlapping hits for display. A marker qubit records the path in the second run. The interference pattern returns in the third run with the marker switched off. Use a terminal at least 64 columns wide and 42 rows tall. [Circuit source](examples/fringes.ket)
+
 ## hardware
 
 The CLI uses IBM Cloud IAM and Sampler V2. Set an IBM Cloud API key, instance CRN and device name, then choose `--backend ibm` or write `on ibm` in the program. Ket routes the checked circuit onto the device’s connections and submits a hardware job. [IBM configuration and commands](docs/usage/cli.md#ibm-quantum)

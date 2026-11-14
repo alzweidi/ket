@@ -12,7 +12,7 @@ function evaluate(source, run, shots, seed) {
   try { return JSON.parse(engine.UTF8ToString(pointer)); }
   finally { engine._free(pointer); }
 }
-const examples = ['bell-state', 'grover', 'qft', 'teleportation'];
+const examples = ['bell-state', 'grover', 'qft', 'teleportation', 'fringes'];
 for (const name of examples) {
   const file = new URL('../../examples/' + name + '.ket', import.meta.url);
   const source = readFileSync(file, 'utf8');
@@ -29,4 +29,4 @@ assert.deepEqual(evaluate(nested, true, 8, 0).result.counts, {'01': 8});
 assert.match(evaluate(nested, false, 1, 0).qasmError.message, /nested/);
 assert.match(evaluate('circuit c() {qubit q} run c() on ibm', true, 1, 0).error.message, /IBM/);
 assert.equal(evaluate('qubit q repeat 200 { X q }', false, 1, 0).circuit.ops.length, 160);
-console.log('WebAssembly matches the native counts and OpenQASM for all four examples.');
+console.log(`WebAssembly matches native counts and OpenQASM for all ${examples.length} examples.`);

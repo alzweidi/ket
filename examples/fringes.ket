@@ -1,0 +1,16 @@
+// phase is the relative phase between paths 0 and 8.
+// setting tag to 1 records the path in the marker qubit.
+circuit fringes(phase: angle, tag: angle) {
+  qubit screen[6]
+  qubit marker
+
+  H screen[2]
+  Rz(phase) screen[2]
+  repeat tag { CNOT screen[2], marker }
+  qft screen
+
+  let pixel = measure screen
+  let path = measure marker
+}
+
+run fringes(0, 0)
