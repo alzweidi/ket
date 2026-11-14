@@ -1,13 +1,14 @@
 # docs
 
-this folder is the public documentation set for ket. it replaces the old monolithic development spec and tracks the current source tree.
+this folder is the public documentation set for ket. the native c toolchain and the original typescript implementation currently have separate guides.
 
 ## start here
 
-- [getting-started/installation.md](./getting-started/installation.md) covers installation, builds, and the first local run
-- [language/overview.md](./language/overview.md) explains the `.ket` language surface and its current limits
-- [usage/cli.md](./usage/cli.md) documents the cli commands, backend selection, config sources, and playground entry point
-- [codebase/architecture.md](./codebase/architecture.md) explains the compiler pipeline and repository layout
+- [native.md](./native.md) covers the c build, commands, language rules, implementation, and limits
+- [getting-started/installation.md](./getting-started/installation.md) covers the typescript cli and playground setup
+- [language/overview.md](./language/overview.md) explains the original typescript language behaviour
+- [usage/cli.md](./usage/cli.md) documents the typescript commands, backend selection, config sources, and playground entry point
+- [codebase/architecture.md](./codebase/architecture.md) explains the typescript compiler pipeline
 - [project/open-source.md](./project/open-source.md) summarises maintainer, licence, and commit hygiene
 
 ## documentation rules

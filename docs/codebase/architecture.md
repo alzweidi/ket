@@ -1,5 +1,7 @@
 # architecture
 
+this page describes the typescript implementation. see the [native guide](../native.md#implementation) for the c frontend, shared circuit representation, and backends.
+
 ## repository layout
 
 - [`src`](../../src) contains the compiler, interpreter, qasm emitter, backends, and cli

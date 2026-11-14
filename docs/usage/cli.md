@@ -1,5 +1,7 @@
 # cli usage
 
+this page covers the typescript cli. the c executable has its own [command reference](../native.md#commands).
+
 ## command summary
 
 ```text
@@ -30,6 +32,8 @@ node dist/ket.js run examples/grover.ket --shots 256
 ## compile
 
 `ket compile` emits openqasm 2.0 to stdout.
+
+the typescript exporter supports phase oracles and diffusion on up to three qubits. use the [native compiler](../native.md#commands) for wider operands, up to ten qubits.
 
 ```bash
 node dist/ket.js compile examples/qft.ket
@@ -72,4 +76,4 @@ supported keys:
 - [`examples/bell-state.ket`](../../examples/bell-state.ket) creates a bell state
 - [`examples/grover.ket`](../../examples/grover.ket) runs grover search with a bitstring parameter
 - [`examples/qft.ket`](../../examples/qft.ket) applies the built-in qft operation
-- [`examples/teleportation.ket`](../../examples/teleportation.ket) shows sequential indexed measurements
+- [`examples/teleportation.ket`](../../examples/teleportation.ket) teleports a plus state with classical corrections and checks the result in the x basis

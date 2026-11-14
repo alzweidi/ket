@@ -1,122 +1,83 @@
 # ket
 
-ket is a small quantum programming language, simulator, and cli written in typescript. it can interpret `.ket` programs locally, compile them to openqasm 2.0, submit qasm jobs to ibm quantum, and open a hosted browser playground for interactive work.
+ket is a small language for writing quantum circuits, inspecting their amplitudes, and running measurement experiments.
 
-## status
+the native toolchain is written in c17. it checks `.ket` programs, specialises their gates and loops into a circuit, simulates that circuit locally, and exports the same operations to openqasm 2.0. the executable has no third-party runtime dependencies.
 
-ket is an experimental but usable quantum toolchain. the repository is prepared for public collaboration, and the docs in [`docs/README.md`](./docs/README.md) are the authoritative public reference for the current implementation.
+## build and run
 
-## features
+you need a c17 compiler with complex-number support and `make` (clang or gcc on macos/linux).
 
-- utf-8 lexer and recursive-descent parser for `.ket` source files
-- type checker for qubits, classical bits, user-defined gates, and circuits
-- local statevector simulator with built-in grover diffusion, phase oracle, and qft support
-- openqasm 2.0 emitter
-- cli commands for `run`, `compile`, `viz`, and `auth`
-- vite/react playground for editing, circuit visualisation, and result inspection
-
-## quick start
-
-```bash
-pnpm install
-pnpm build
-node dist/ket.js run examples/bell-state.ket --shots 32
+```sh
+make
+./build/ket run examples/bell-state.ket --shots 4096 --seed 42
+./build/ket inspect examples/bell-state.ket
+./build/ket compile examples/grover.ket -o build/grover.qasm
 ```
 
-## language example
+`run` reports sampled counts. `inspect` reports the complex amplitudes before terminal measurements, so interference and phase are visible directly.
+
+## a ket program
 
 ```ket
-circuit bell_state() {
-  qubit q[2]
-
-  H q[0]
-  CNOT q[0], q[1]
-
-  let r = measure q
+gate entangle(a, b) {
+  H a
+  CNOT a, b
 }
 
-run bell_state()
+circuit bell() {
+  qubit q[2]
+  entangle q[0], q[1]
+  let result = measure q
+}
+
+run bell() on local
 ```
 
-compile a program to openqasm:
+the first qubit is the leftmost bit: this circuit produces `00` and `11`. use a fixed seed to reproduce a run. use `--json` on `run` or `inspect` for machine-readable results.
 
-```bash
-node dist/ket.js compile examples/qft.ket
-```
+## native status
 
-open the playground with a program loaded:
+this is the first native implementation, not a complete replacement of every tool in the repository. it supports:
 
-```bash
-node dist/ket.js viz examples/teleportation.ket
-```
+- single-qubit gates, rotations, cnot, cz, swap, and toffoli
+- custom unitary gates, angle/bitstring circuit parameters, and bounded repeats
+- measurement with classical feed-forward, including [teleportation](./examples/teleportation.ket)
+- qft, phase oracles, and grover diffusion lowered to shared primitive operations
+- source-location errors, deterministic sampling, and openqasm export
 
-## ibm quantum setup
+the state-vector simulator supports up to 20 qubits. exact oracle/diffusion expansion is limited to 10 qubits and all circuits to 100,000 expanded operations. unsupported exports fail explicitly.
 
-store your ibm quantum token and optional defaults:
-
-```bash
-node dist/ket.js auth --ibm <token> --instance ibm-q/open/main --backend ibm_brisbane
-```
-
-you can also provide the same values through your shell environment or a local `.env` file:
-
-```bash
-cp .env.example .env
-```
-
-`ket run` resolves the execution backend in this order:
-
-- `--backend <local|ibm>`
-- `run ... on ibm` in the source program
-- local execution by default
-
-values from the shell or `.env` override `~/.ket/config`. when you use `ket auth`, the config file is created with owner-only permissions on non-windows systems.
+the native cli runs locally; it does not submit hardware jobs or power the browser playground yet. `compile` emits openqasm, not a cpu executable. see the [native guide](./docs/native.md) for language rules, limits, and the c api.
 
 ## development
 
-```bash
-pnpm install
-pnpm dev
-pnpm lint
-pnpm typecheck
-pnpm test
+```sh
+make test       # python 3, standard library only
+make sanitise   # clang address and undefined-behaviour sanitisers
+```
+
+tests compare qft against the analytic fourier transform, grover against its success formula, and exported operations against a separate dense-matrix evaluator. they also exercise teleportation, measurement ordering, compiler limits, malformed input, and file handling.
+
+## typescript implementation and playground
+
+the original implementation remains in [`src`](./src), with the browser app in [`playground`](./playground). it has its own simulator and exporter; it does not use the native core.
+
+```sh
+pnpm install --frozen-lockfile
 pnpm build
-pnpm build:playground
+pnpm dev
 ```
 
-`pnpm dev` starts the workspace development flow:
-
-- the vite playground dev server from [`playground`](./playground)
-- the cli bundle watcher that rebuilds `dist/ket.js`
-
-for direct cli execution in typescript, use:
-
-```bash
-pnpm dev:cli -- run examples/bell-state.ket --shots 32
-```
+the [typescript installation guide](./docs/getting-started/installation.md) covers its cli, playground, and ibm configuration. the native fixes and limits described above apply to `build/ket`.
 
 ## project layout
 
-- [`src`](./src) contains the lexer, parser, type checker, simulator, code generator, backends, and cli
-- [`playground`](./playground) contains the browser playground
-- [`examples`](./examples) contains runnable sample programs
-- [`tests`](./tests) contains the automated test suite
+- [`native`](./native): c frontend, circuit representation, simulator, exporter, and tests
+- [`examples`](./examples): runnable quantum programs
+- [`src`](./src), [`tests`](./tests), [`playground`](./playground): original typescript implementation
+- [`docs`](./docs/README.md): native and typescript documentation
 
-## docs
+## maintainer and licence
 
-- [`docs/README.md`](./docs/README.md) is the documentation index
-- [`docs/getting-started/installation.md`](./docs/getting-started/installation.md) covers setup and first runs
-- [`docs/language/overview.md`](./docs/language/overview.md) explains the language surface
-- [`docs/usage/cli.md`](./docs/usage/cli.md) documents the cli and playground entry points
-- [`docs/codebase/architecture.md`](./docs/codebase/architecture.md) explains the codebase layout and execution pipeline
-- [`docs/project/open-source.md`](./docs/project/open-source.md) covers open-source and commit hygiene
-- [`CONTRIBUTING.md`](./CONTRIBUTING.md) explains the contribution workflow
-- [`SECURITY.md`](./SECURITY.md) explains how to report vulnerabilities
-
-## maintainer
-
-ket is maintained by Abedalaziz Alzweidi.
-
-## licence
-
-this project is released under the apache-2.0 licence. see [`LICENSE`](./LICENSE) and [`NOTICE`](./NOTICE).
+ket is maintained by Abedalaziz Alzweidi. released under apache-2.0; see [`LICENSE`](./LICENSE), [`NOTICE`](./NOTICE), and [`CONTRIBUTING.md`](./CONTRIBUTING.md).

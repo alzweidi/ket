@@ -111,7 +111,7 @@ export class Lexer {
     while (!this.isAtEnd()) {
       const char = this.peek();
       if (char === '⟩') {
-        /* v8 ignore start -- the per-character length guard below throws before an oversized literal can reach the closing delimiter. */
+        /* v8 ignore start -- the length check below rejects oversized literals first. */
         if (bitstring.length > MAX_KET_LENGTH) {
           throw new LexError(
             `Ket literal exceeds maximum length of ${MAX_KET_LENGTH}`,

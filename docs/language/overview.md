@@ -1,5 +1,7 @@
 # language overview
 
+this page describes the original typescript implementation. the [native guide](../native.md) is the reference for the c implementation and its stricter circuit rules.
+
 ## file structure
 
 ket source files are plain utf-8 text. line comments start with `//`.

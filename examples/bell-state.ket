@@ -1,4 +1,4 @@
-// Bell state: |Φ+⟩ = (|00⟩ + |11⟩) / √2
+// bell state: (|00⟩ + |11⟩) / sqrt(2)
 circuit bell_state() {
   qubit q[2]
 

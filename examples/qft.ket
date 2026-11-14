@@ -1,4 +1,4 @@
-// Quantum Fourier Transform on 4 qubits
+// quantum fourier transform on 4 qubits
 circuit qft_example() {
   qubit q[4]
 

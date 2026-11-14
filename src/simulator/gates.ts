@@ -65,6 +65,10 @@ export function gateRz(theta: number): Matrix2x2 {
   return [[cexp(-theta / 2), ZERO], [ZERO, cexp(theta / 2)]];
 }
 
+export function gatePhase(theta: number): Matrix2x2 {
+  return [[ONE, ZERO], [ZERO, cexp(theta)]];
+}
+
 export function gateCNOT(): Matrix4x4 {
   return [
     [ONE, ZERO, ZERO, ZERO],

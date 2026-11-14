@@ -11,7 +11,7 @@ import { useKetWorker } from './hooks/useKetWorker.js';
 import { useStore } from './store/useStore.js';
 
 const EXAMPLES = {
-  bell: `// Bell state: |Φ+⟩ = (|00⟩ + |11⟩) / √2
+  bell: `// bell state: (|00⟩ + |11⟩) / sqrt(2)
 circuit bell_state() {
   qubit q[2]
 
@@ -23,7 +23,7 @@ circuit bell_state() {
 
 run bell_state()
 `,
-  grover: `// Grover's search: find |101⟩ in 3-qubit space
+  grover: `// grover's search: find |101⟩ among 8 states
 circuit grover(target: bitstring) {
   qubit q[3]
 
@@ -41,7 +41,7 @@ circuit grover(target: bitstring) {
 
 run grover(|101⟩)
 `,
-  qft: `// Quantum Fourier Transform on 4 qubits
+  qft: `// quantum fourier transform on 4 qubits
 circuit qft_example() {
   qubit q[4]
   X q[0]
@@ -51,7 +51,7 @@ circuit qft_example() {
 
 run qft_example()
 `,
-  teleportation: `// Quantum teleportation protocol (3 qubits)
+  teleportation: `// teleport |+> from q[0] to q[2], including the classical corrections.
 circuit teleportation() {
   qubit q[3]
   H q[0]
@@ -61,6 +61,14 @@ circuit teleportation() {
   H q[0]
   let c = measure q[0]
   let d = measure q[1]
+  if d == |1⟩ {
+    X q[2]
+  }
+  if c == |1⟩ {
+    Z q[2]
+  }
+  // check in the x basis: the final result must always be 0.
+  H q[2]
   let r = measure q[2]
 }
 

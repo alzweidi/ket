@@ -1,4 +1,4 @@
-// Quantum teleportation protocol (3 qubits)
+// teleport |+> from q[0] to q[2], including the classical corrections.
 circuit teleportation() {
   qubit q[3]
 
@@ -10,6 +10,16 @@ circuit teleportation() {
 
   let c = measure q[0]
   let d = measure q[1]
+
+  if d == |1⟩ {
+    X q[2]
+  }
+  if c == |1⟩ {
+    Z q[2]
+  }
+
+  // check in the x basis: the final result must always be 0.
+  H q[2]
   let r = measure q[2]
 }
 

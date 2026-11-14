@@ -40,7 +40,7 @@ export default function CircuitViz({ ast }: CircuitVizProps) {
   if (wires.length > 16) {
     return (
       <div className="panel-empty">
-        <strong>Visualization limit reached</strong>
+        <strong>Visualisation limit reached</strong>
         <span>Circuits with more than 16 qubits are intentionally hidden to preserve readability.</span>
       </div>
     );
@@ -84,7 +84,7 @@ export default function CircuitViz({ ast }: CircuitVizProps) {
       <div className="circuit-board">
         <div className="circuit-scroll">
           <svg
-            aria-label="Circuit visualization"
+            aria-label="Circuit visualisation"
             height={height}
             role="img"
             viewBox={`0 0 ${Math.max(width, 640)} ${height}`}

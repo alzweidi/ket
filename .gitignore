@@ -6,3 +6,4 @@ coverage
 playground/dist
 .env
 .claude-flow
+build/

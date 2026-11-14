@@ -1,5 +1,7 @@
 # installation
 
+this page covers the typescript cli and browser playground. for the c executable, start with the [native guide](../native.md).
+
 ## prerequisites
 
 - node.js 20 or later

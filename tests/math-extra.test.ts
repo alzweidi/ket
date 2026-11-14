@@ -133,7 +133,7 @@ describe('statevector operations', () => {
     );
 
     const zero = StateVector.fromAmplitudes(1, [ZERO, ZERO]);
-    expect(() => zero.normalize()).toThrow('Cannot normalize zero state');
+    expect(() => zero.normalize()).toThrow('Cannot normalise zero state');
   });
 });
 

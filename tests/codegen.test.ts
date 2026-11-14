@@ -14,7 +14,8 @@ describe('QasmEmitter', () => {
     expect(qasm).toContain('qreg q[2];');
     expect(qasm).toContain('h q[0];');
     expect(qasm).toContain('cx q[0], q[1];');
-    expect(qasm).toContain('measure q -> r;');
+    expect(qasm).toContain('measure q[0] -> r[1];');
+    expect(qasm).toContain('measure q[1] -> r[0];');
   });
 
   it('substitutes run-time bitstring parameters into phase oracles', () => {
@@ -44,6 +45,17 @@ describe('QasmEmitter', () => {
       'rotate.ket'
     );
     const qasm = new QasmEmitter().emit(program);
-    expect(qasm).toContain('rx(3.1415926536) q[0];');
+    const angle = qasm.match(/rx\(([^)]+)\) q\[0\];/)![1]!;
+    expect(Number(angle)).toBe(Math.PI);
+  });
+
+  it('preserves small angles and rejects a non-finite rotation', () => {
+    const emitRotation = (angle: string) => new QasmEmitter().emit(
+      compileSource(`qubit q\nRz(${angle}) q\n`, 'rotation.ket')
+    );
+    const literal = emitRotation('1/1000000000000').match(/rz\(([^)]+)\)/)![1]!;
+    expect(literal).toMatch(/^\d+\.\d+e-\d+$/);
+    expect(Number(literal)).toBe(1e-12);
+    expect(() => emitRotation('sqrt(0-1)')).toThrow('non-finite rotation');
   });
 });

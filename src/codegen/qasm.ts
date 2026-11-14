@@ -20,6 +20,14 @@ type EmissionContext = {
 };
 
 export class QasmEmitter {
+  private swap(a: string, b: string, indent: string): string[] {
+    return [
+      `${indent}cx ${a}, ${b};`,
+      `${indent}cx ${b}, ${a};`,
+      `${indent}cx ${a}, ${b};`
+    ];
+  }
+
   public emit(program: Program): string {
     const gateDefs = program.body.filter((node): node is GateDef => node.kind === 'gate_def');
     const run = program.body.find((node): node is RunStatement => node.kind === 'run') ?? null;
@@ -138,12 +146,16 @@ export class QasmEmitter {
       case 'gate_app':
         return this.emitGateApplication(stmt.gate, stmt.targets, context.registers, indent);
       case 'param_gate_app': {
-        const angle = this.evaluateAngleExpr(
+        const value = this.evaluateAngleExpr(
           stmt.angle,
           context.runArgs,
           stmt.loc.line,
           stmt.loc.column
-        ).toFixed(10);
+        );
+        if (!Number.isFinite(value)) {
+          throw new Error(`Cannot export a non-finite rotation at ${stmt.loc.line}:${stmt.loc.column}`);
+        }
+        const angle = value.toExponential(16);
         return this.emitTargets(
           stmt.target,
           context.registers,
@@ -154,13 +166,12 @@ export class QasmEmitter {
         return this.emitBuiltinAlgo(stmt, context.registers, indent);
       case 'phase_oracle':
         return this.emitPhaseOracle(stmt, context, indent);
-      case 'let_measure':
-        return [
-          `${indent}measure ${this.formatTarget(stmt.source)} -> ${this.formatClassicalTarget(
-            stmt.bindingName,
-            stmt.source
-          )};`
-        ];
+      case 'let_measure': {
+        const qubits = this.expandTarget(stmt.source, context.registers);
+        return qubits.map((qubit, index) =>
+          `${indent}measure ${qubit} -> ${stmt.bindingName}[${qubits.length - 1 - index}];`
+        );
+      }
       case 'if': {
         const value =
           stmt.condition.kind === 'eq_ket'
@@ -183,7 +194,7 @@ export class QasmEmitter {
         return lines;
       }
       case 'user_gate_call':
-        return [`${indent}${stmt.name} ${stmt.args.map((arg) => this.formatTarget(arg)).join(', ')};`];
+        return [`${indent}${stmt.name} ${stmt.args.map((arg) => this.formatTarget(arg, context.registers)).join(', ')};`];
     }
   }
 
@@ -193,32 +204,16 @@ export class QasmEmitter {
     registers: Map<string, RegisterInfo>,
     indent: string
   ): string[] {
-    const gateName =
-      gate === 'H'
-        ? 'h'
-        : gate === 'X'
-          ? 'x'
-          : gate === 'Y'
-            ? 'y'
-            : gate === 'Z'
-              ? 'z'
-              : gate === 'S'
-                ? 's'
-                : gate === 'T'
-                  ? 't'
-                  : gate === 'CNOT'
-                    ? 'cx'
-                    : gate === 'CZ'
-                      ? 'cz'
-                      : gate === 'SWAP'
-                        ? 'swap'
-                        : 'ccx';
+    if (gate === 'SWAP') {
+      return this.swap(this.formatTarget(targets[0]!, registers), this.formatTarget(targets[1]!, registers), indent);
+    }
+    const gateName = gate === 'CNOT' ? 'cx' : gate === 'Toffoli' ? 'ccx' : gate.toLowerCase();
 
     if (targets.length === 1) {
       return this.emitTargets(targets[0]!, registers, (target) => `${indent}${gateName} ${target};`);
     }
 
-    return [`${indent}${gateName} ${targets.map((target) => this.formatTarget(target)).join(', ')};`];
+    return [`${indent}${gateName} ${targets.map((target) => this.formatTarget(target, registers)).join(', ')};`];
   }
 
   private emitBuiltinAlgo(stmt: BuiltinAlgoStmt, registers: Map<string, RegisterInfo>, indent: string): string[] {
@@ -233,7 +228,7 @@ export class QasmEmitter {
         }
       }
       for (let index = 0; index < Math.floor(qubits.length / 2); index += 1) {
-        lines.push(`${indent}swap ${qubits[index]}, ${qubits[qubits.length - 1 - index]};`);
+        lines.push(...this.swap(qubits[index]!, qubits[qubits.length - 1 - index]!, indent));
       }
       return lines;
     }
@@ -345,7 +340,7 @@ export class QasmEmitter {
         `${indent}h ${qubits[2]};`
       ];
     }
-    return [`${indent}// multi-controlled Z (n=${qubits.length}) requires decomposition for hardware`];
+    throw new Error('OpenQASM export of an oracle or diffusion on more than three qubits requires the native ket compile command.');
   }
 
   private emitTargets(
@@ -357,8 +352,8 @@ export class QasmEmitter {
   }
 
   private expandTarget(ref: QubitRef, registers: Map<string, RegisterInfo>): string[] {
-    if (ref.index !== null) {
-      return [this.formatTarget(ref)];
+    if (ref.index !== null || !registers.has(ref.name)) {
+      return [this.formatTarget(ref, registers)];
     }
     const size = this.qubitRefSize(registers, ref);
     return Array.from({ length: size }, (_, index) => `${ref.name}[${index}]`);
@@ -368,17 +363,11 @@ export class QasmEmitter {
     return registers.get(ref.name)?.size ?? 1;
   }
 
-  private formatClassicalTarget(
-    bindingName: string,
-    source: QubitRef
-  ): string {
-    if (source.index === null) {
-      return bindingName;
+  private formatTarget(ref: QubitRef, registers: Map<string, RegisterInfo>): string {
+    /* formal gate operands are single wires and have no register index. */
+    if (ref.index === null || !registers.has(ref.name)) {
+      return ref.name;
     }
-    return `${bindingName}[0]`;
-  }
-
-  private formatTarget(ref: QubitRef): string {
-    return ref.index === null ? ref.name : `${ref.name}[${ref.index}]`;
+    return `${ref.name}[${ref.index}]`;
   }
 }

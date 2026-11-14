@@ -74,7 +74,7 @@ export default function ResultsPanel({ result }: ResultsPanelProps) {
       </div>
 
       <p className="results-panel__note">
-        States are sorted by measured probability. Bars are normalized to the strongest observed
+        States are sorted by measured probability. Bars are normalised to the strongest observed
         outcome to keep low-amplitude states legible.
       </p>
     </div>

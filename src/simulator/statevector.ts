@@ -161,7 +161,7 @@ export class StateVector {
   public normalize(): void {
     const norm = Math.sqrt(this.probabilities().reduce((sum, value) => sum + value, 0));
     if (norm === 0) {
-      throw new SimulatorError('Cannot normalize zero state');
+      throw new SimulatorError('Cannot normalise zero state');
     }
     this.amps = this.amps.map((amp) => cdiv(amp, creal(norm)));
   }

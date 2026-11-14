@@ -22,11 +22,12 @@ describe('Integration', () => {
     expect(qasm.startsWith('OPENQASM 2.0;')).toBe(true);
   });
 
-  it('runs the teleportation example without rejecting later indexed measurements', () => {
+  it('teleports a plus state and verifies it in the x basis', () => {
     const source = fs.readFileSync(path.join(process.cwd(), 'examples', 'teleportation.ket'), 'utf8');
     const program = compileSource(source, 'examples/teleportation.ket');
     const result = new Interpreter(program, { shots: 64 }).run();
     expect([...result.counts.values()].reduce((sum, count) => sum + count, 0)).toBe(64);
+    expect([...result.counts.keys()].every((bits) => bits.endsWith('0'))).toBe(true);
   });
 
   it('emits the concrete Grover oracle target in compiled QASM', () => {
@@ -34,6 +35,12 @@ describe('Integration', () => {
     const program = compileSource(source, 'examples/grover.ket');
     const qasm = new QasmEmitter().emit(program);
     expect(qasm).toContain('x q[1];');
+  });
+
+  it('recovers a basis state after four Fourier transforms', () => {
+    const source = 'qubit q[2]\nX q[1]\nrepeat 4 {\nqft q\n}\nlet r = measure q\n';
+    const result = new Interpreter(compileSource(source, 'fourier.ket'), { shots: 64 }).run();
+    expect(result.counts).toEqual(new Map([['01', 64]]));
   });
 
   it('runs circuits with angle parameters end to end', () => {

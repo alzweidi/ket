@@ -17,6 +17,7 @@ import {
   gateCNOT,
   gateCZ,
   gateH,
+  gatePhase,
   gateRx,
   gateRy,
   gateRz,
@@ -96,7 +97,7 @@ export class Interpreter {
       probabilities.set(bitstring, count / settings.shots);
     }
 
-    /* v8 ignore next 4 -- the multi-shot loop always assigns lastState when shots > 1. */
+    /* v8 ignore next 4 -- the loop always assigns a final state when shots > 1. */
     if (!lastState) {
       return { counts, probabilities };
     }
@@ -372,7 +373,7 @@ export class Interpreter {
       for (let k = j + 1; k < qubits.length; k += 1) {
         const control = qubits[k]!;
         const theta = (2 * Math.PI) / 2 ** (k - j + 1);
-        state.applyControlledSingle(gateRz(theta), control, target);
+        state.applyControlledSingle(gatePhase(theta), control, target);
       }
     }
     for (let index = 0; index < Math.floor(qubits.length / 2); index += 1) {

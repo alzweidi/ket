@@ -18,6 +18,7 @@ describe('QasmEmitter internals', () => {
     );
     const qasm = new QasmEmitter().emit(program);
     expect(qasm).toContain('gate bell a, b {');
+    expect(qasm).toContain('h a;');
     expect(qasm).toContain('qreg q[2];');
     expect(qasm).toContain('bell q[0], q[1];');
   });
@@ -62,10 +63,9 @@ describe('QasmEmitter internals', () => {
     expect(emitter.expandTarget(qref('q'), registers)).toEqual(['q[0]', 'q[1]']);
     expect(emitter.expandTarget(qref('q', 1), registers)).toEqual(['q[1]']);
     expect(emitter.qubitRefSize(registers, qref('missing'))).toBe(1);
-    expect(emitter.formatClassicalTarget('m', qref('q'))).toBe('m');
-    expect(emitter.formatClassicalTarget('m', qref('q', 0))).toBe('m[0]');
-    expect(emitter.formatTarget(qref('q'))).toBe('q');
-    expect(emitter.formatTarget(qref('q', 1))).toBe('q[1]');
+    expect(emitter.formatTarget(qref('q'), registers)).toBe('q');
+    expect(emitter.formatTarget(qref('q', 1), registers)).toBe('q[1]');
+    expect(emitter.formatTarget(qref('a', 0), new Map())).toBe('a');
   });
 
   it('covers emission branches for statements, gates, and built-ins', () => {
@@ -88,7 +88,7 @@ describe('QasmEmitter internals', () => {
       'cz q[0], q[1];'
     ]);
     expect(emitter.emitGateApplication('SWAP', [qref('q', 0), qref('q', 1)], registers, '')).toEqual([
-      'swap q[0], q[1];'
+      'cx q[0], q[1];', 'cx q[1], q[0];', 'cx q[0], q[1];'
     ]);
     expect(
       emitter.emitGateApplication('Toffoli', [qref('q', 0), qref('q', 1), qref('q', 2)], registers, '')
@@ -99,14 +99,14 @@ describe('QasmEmitter internals', () => {
         .join('\n')
     ).toContain('cu1(');
     expect(
-      emitter.emitBuiltinAlgo({ kind: 'builtin_algo', algo: 'diffuse', target: qref('q'), loc }, registers, '')
+      emitter.emitBuiltinAlgo({ kind: 'builtin_algo', algo: 'diffuse', target: qref('q', 0), loc }, registers, '')
         .join('\n')
     ).toContain('h q[0];');
 
     expect(emitter.emitControlledZ(['q[0]'], '')).toEqual(['z q[0];']);
     expect(emitter.emitControlledZ(['q[0]', 'q[1]'], '')).toEqual(['cz q[0], q[1];']);
     expect(emitter.emitControlledZ(['q[0]', 'q[1]', 'q[2]'], '').join('\n')).toContain('ccx');
-    expect(emitter.emitControlledZ(['q[0]', 'q[1]', 'q[2]', 'q[3]'], '')[0]).toContain('multi-controlled Z');
+    expect(() => emitter.emitControlledZ(['q[0]', 'q[1]', 'q[2]', 'q[3]'], '')).toThrow('native ket compile');
 
     expect(
       emitter.emitStatement(

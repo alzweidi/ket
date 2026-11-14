@@ -4,7 +4,17 @@ thanks for contributing to ket.
 
 ## getting started
 
-use node 20 or later and pnpm.
+for the native c toolchain, use clang or gcc with c17 support, make, and python 3:
+
+```sh
+make
+make test
+make sanitise
+```
+
+the [native guide](./docs/native.md) describes the implementation and current limits. keep simulator/exporter semantics in the shared lowered operations, and test quantum behaviour against analytic states or an independent evaluator.
+
+for the typescript cli and playground, use node 20 or later and pnpm:
 
 ```bash
 pnpm install
@@ -26,8 +36,10 @@ for local development, `pnpm dev` starts the playground dev server and the cli b
 
 ## code style
 
-- run `pnpm lint`, `pnpm typecheck`, and `pnpm test` before opening a pull request
-- use `pnpm format` for source formatting where needed
+- for native changes, run `make test` and `make sanitise`; compiler warnings are errors
+- for typescript changes, run `pnpm lint`, `pnpm typecheck`, and `pnpm test`
+- use `pnpm format` for typescript source formatting where needed
+- write prose in british english; keep code comments lowercase, brief, and specific
 - avoid committing secrets, tokens, local `.env` files, or generated build output
 
 ## reporting problems
